@@ -37,6 +37,7 @@ or (german) http://www.selfsvg.info .
 
    classes/base
    classes/drawing
+   classes/merge
    classes/svg
    classes/group
    classes/defs

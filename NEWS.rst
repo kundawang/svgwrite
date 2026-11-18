@@ -5,6 +5,16 @@ NEWS
 Version 1.4.3b0 - dev
 ---------------------
 
+* NEW: :meth:`Drawing.merge` / :meth:`Drawing.merge_all` combine multiple
+  ``Drawing`` objects into one document. Each source is wrapped in an
+  independent group, its ``id`` attributes are namespace-prefixed and all
+  internal ``href`` / ``xlink:href`` fragments and ``url(#...)`` references
+  (including embedded CSS and SMIL timing values) are rewritten, so same-named
+  gradients, clip paths and masks no longer overwrite each other. External
+  URLs are left untouched, source drawings are deep copied (reusable) and the
+  output is deterministic. Duplicate/invalid ids, namespace collisions,
+  missing references and circular ``use`` chains raise ``MergeError``
+  subclasses in strict mode or are collected in a ``MergeReport`` otherwise.
 * BUGFIX: #114 Polyline validation by @normanrz
 
 Version 1.4.2 - 2022-03-23

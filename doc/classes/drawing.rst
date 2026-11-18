@@ -31,6 +31,12 @@ Methods
 
 .. automethod:: svgwrite.drawing.Drawing.add_stylesheet
 
+.. automethod:: svgwrite.drawing.Drawing.merge
+
+.. automethod:: svgwrite.drawing.Drawing.merge_all
+
+See :doc:`merge` for a full explanation and examples.
+
 .. automethod:: svgwrite.drawing.Drawing.get_xml
 
 .. method:: Drawing.tostring()
