@@ -9,6 +9,11 @@ Text
 
 Refer to **TSpan** SVG Attributes
 
+Methods
+-------
+
+.. automethod:: svgwrite.text.Text.wrap
+
 Parent Classes
 --------------
 
@@ -16,6 +21,55 @@ Parent Classes
 * :class:`svgwrite.text.TSpan`
 * :class:`svgwrite.mixins.Transform`
 * :class:`svgwrite.mixins.Presentation`
+
+Multiline Text
+==============
+
+SVG has no automatic line wrapping for the **text** element, so a long
+place name simply runs out of its label box. :class:`svgwrite.text.TextLayout`
+splits text into lines of at most **max_width** user units and
+:meth:`svgwrite.text.Text.wrap` turns those lines into one **tspan** per line
+with absolute ``x`` / ``y`` coordinates.
+
+`svgwrite` does not load fonts, therefore the caller has to supply the glyph
+metrics as a **measure** callback - any function ``measure(text) -> width``
+returning a finite, non-negative number in user units::
+
+    import svgwrite
+
+    def measure(text):
+        # replace with the metrics of the used font, e.g. via Pillow
+        return sum(10 if '一' <= c <= '鿿' else 6 for c in text)
+
+    drawing = svgwrite.Drawing('labels.svg')
+    label = drawing.text('地图上的地名', insert=(100, 50),
+                         font_size=12, text_anchor='middle')
+    label.wrap(max_width=40, line_height=14, measure=measure)
+    drawing.add(label)
+
+Line breaking rules:
+
+* an explicit ``'\\n'`` starts a new line
+* Latin text is wrapped at word boundaries; a word wider than **max_width**
+  is split between characters (``break_long_words=False`` keeps it whole)
+* CJK text (Chinese, Japanese, Korean) may be broken between any two
+  characters
+* ``xml_space='default'`` collapses whitespace; ``'preserve'`` keeps it and
+  sets ``xml:space="preserve"``
+* **max_lines** drops the remaining lines and optionally appends an
+  **ellipsis** marker to the last line
+
+The **Text** element keeps its attributes, so the ``text-anchor`` and
+``dominant-baseline`` (or any other presentation attribute) are copied onto
+the generated tspans and every line is placed at the same ``x`` anchor.
+
+.. autoclass:: svgwrite.text.TextLayout
+
+.. autoclass:: svgwrite.text.TextLine
+
+.. autoclass:: svgwrite.text.TextLayoutError
+
+.. autofunction:: svgwrite.text.wrap_text
 
 TSpan
 =====

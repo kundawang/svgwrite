@@ -5,6 +5,14 @@ NEWS
 Version 1.4.3b0 - dev
 ---------------------
 
+* NEW: multiline text layout. :class:`svgwrite.text.TextLayout` wraps text
+  into lines of at most ``max_width`` user units using a caller supplied font
+  measurement callback and :meth:`svgwrite.text.Text.wrap` turns those lines
+  into one ``tspan`` per line. English is wrapped at word boundaries, CJK is
+  wrapped per character, long words are split, explicit newlines and the
+  ``xml:space`` policy are honoured, and ``max_lines`` / ``ellipsis`` truncate
+  the output. Invalid widths, a failing measure callback, empty text and zero
+  width have defined results.
 * BUGFIX: #114 Polyline validation by @normanrz
 
 Version 1.4.2 - 2022-03-23
