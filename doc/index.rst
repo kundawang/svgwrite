@@ -101,6 +101,12 @@ or (german) http://www.selfsvg.info .
    classes/fe_image
    classes/fe_merge
    classes/fe_morphology
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Validation
+
+   classes/audit
    classes/fe_offset
    classes/fe_specular_lighting
    classes/fe_tile

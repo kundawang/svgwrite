@@ -5,6 +5,12 @@ NEWS
 Version 1.4.3b0 - dev
 ---------------------
 
+* NEW: reference audit -- :meth:`Drawing.audit_references` scans ids,
+  ``xlink:href`` and ``url(#...)`` references (including inline styles and
+  ``style`` elements) for missing/duplicate/empty ids, reference type
+  mismatches, percent-escaped urls, excessive nesting and circular ``use``
+  chains; :meth:`Drawing.save`/``write`` gained an ``audit`` flag that
+  refuses to export broken documents
 * BUGFIX: #114 Polyline validation by @normanrz
 
 Version 1.4.2 - 2022-03-23

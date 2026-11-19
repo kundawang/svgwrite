@@ -28,6 +28,7 @@ import io
 from svgwrite.container import SVG, Defs
 from svgwrite.elementfactory import ElementFactory
 from svgwrite.utils import pretty_xml
+from svgwrite.audit import audit_references, ReferenceAuditError
 
 
 class Drawing(SVG, ElementFactory):
@@ -83,17 +84,43 @@ class Drawing(SVG, ElementFactory):
         """
         self._stylesheets.append((href, title, alternate, media))
 
-    def write(self, fileobj, pretty=False, indent=2):
+    def audit_references(self, strict=True, max_depth=256):
+        """ Audit all id/href/``url(#...)`` references of the drawing.
+
+        Scans the complete document tree -- including the ``defs`` section
+        and nested groups -- for missing references, duplicate/empty ids,
+        reference type mismatches (e.g. a ``fill`` pointing at a ``rect``
+        instead of a gradient) and circular ``use`` chains.  Forward
+        references (definition appears after the referencing element) are
+        legal and do not raise findings.
+
+        :param bool strict: in strict mode every defect is an error; in
+          non-strict mode empty ids, duplicate ids, type mismatches,
+          percent-escaped fragment ids and excessive nesting are warnings
+        :param int max_depth: nesting depth at which deep nesting is reported
+        :returns: :class:`svgwrite.audit.AuditReport`
+        """
+        return audit_references(self, strict=strict, max_depth=max_depth)
+
+    def write(self, fileobj, pretty=False, indent=2, audit=False,
+              strict=True):
         """ Write XML string to `fileobj`.
 
         :param fileobj: a file-like object
         :param pretty: True for easy readable output
         :param indent: how much to indent if pretty is enabled, by default 2 spaces
+        :param bool audit: run :meth:`audit_references` before writing; if
+          the audit finds error-level problems a
+          :class:`svgwrite.audit.ReferenceAuditError` is raised and nothing
+          is written
+        :param bool strict: strict/non-strict mode of the reference audit
 
         Python 3.x - set encoding at the open command::
 
             open('filename', 'w', encoding='utf-8')
         """
+        if audit:
+            self.audit_references(strict=strict).raise_if_errors()
         # write xml header
         fileobj.write('<?xml version="1.0" encoding="utf-8" ?>\n')
 
@@ -111,25 +138,36 @@ class Drawing(SVG, ElementFactory):
             xml_string = pretty_xml(xml_string, indent=indent)
         fileobj.write(xml_string)
 
-    def save(self, pretty=False, indent=2):
+    def save(self, pretty=False, indent=2, audit=False, strict=True):
         """ Write the XML string to `self.filename`.
 
         :param pretty: True for easy readable output
         :param indent: how much to indent if pretty is enabled, by default 2 spaces
+        :param bool audit: run :meth:`audit_references` before writing and
+          raise :class:`svgwrite.audit.ReferenceAuditError` on broken refs;
+          the file is not opened when the audit fails
+        :param bool strict: strict/non-strict mode of the reference audit
         """
+        if audit:
+            self.audit_references(strict=strict).raise_if_errors()
         fileobj = io.open(self.filename, mode='w', encoding='utf-8')
         self.write(fileobj, pretty=pretty, indent=indent)
         fileobj.close()
 
-    def saveas(self, filename, pretty=False, indent=2):
+    def saveas(self, filename, pretty=False, indent=2, audit=False,
+               strict=True):
         """ Write the XML string to `filename`.
 
         :param string filename: filesystem filename valid for :func:`open`
         :param pretty: True for easy readable output
         :param indent: how much to indent if pretty is enabled, by default 2 spaces
+        :param bool audit: run :meth:`audit_references` before writing and
+          raise :class:`svgwrite.audit.ReferenceAuditError` on broken refs;
+          the file is not opened when the audit fails
+        :param bool strict: strict/non-strict mode of the reference audit
         """
         self.filename = filename
-        self.save(pretty=pretty, indent=indent)
+        self.save(pretty=pretty, indent=indent, audit=audit, strict=strict)
 
     def _repr_svg_(self):
         """ Show SVG in IPython, Jupyter Notebook, and Jupyter Lab
