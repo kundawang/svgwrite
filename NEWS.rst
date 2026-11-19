@@ -5,6 +5,16 @@ NEWS
 Version 1.4.3b0 - dev
 ---------------------
 
+* NEW: :meth:`Drawing.embed_images` and :meth:`Image.embed` replace local
+  PNG/JPEG references of **image** elements by base64 ``data:`` URIs, so the
+  written SVG document opens without the original bitmap files. Size,
+  position, ``transform`` and ``opacity`` are preserved, relative references
+  are resolved against an explicit document root, identical files are read
+  only once (content-identical files share one data URI), and remote URLs as
+  well as already embedded data URIs stay unchanged. Missing files, path
+  traversal, extension/content mismatches, oversized assets and circular
+  references raise dedicated :class:`~svgwrite.embed.EmbedError` subclasses;
+  the default XML output is unchanged unless embedding is requested.
 * BUGFIX: #114 Polyline validation by @normanrz
 
 Version 1.4.2 - 2022-03-23

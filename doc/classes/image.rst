@@ -12,6 +12,51 @@ Methods
 
 .. automethod:: svgwrite.image.Image.fit
 
+.. automethod:: svgwrite.image.Image.embed
+
+Embedding local images
+======================
+
+An ``<image>`` element normally links to a separate file. If the SVG document
+is moved or opened on another machine without that file, the bitmap is
+missing. :meth:`svgwrite.Drawing.embed_images` replaces every local PNG/JPEG
+reference by a base64 encoded ``data:`` URI, so the document is
+self-contained::
+
+    import svgwrite
+
+    drawing = svgwrite.Drawing('standalone.svg')
+    drawing.add(drawing.image('icons/logo.png', insert=(10, 10),
+                              size=(32, 32), opacity=0.5,
+                              transform='rotate(10)'))
+    drawing.embed_images(root='assets')
+    drawing.save()
+
+The ``root`` argument is the explicit document root for relative references;
+paths which resolve outside of it are rejected. ``x``, ``y``, ``width``,
+``height``, ``transform`` and ``opacity`` are not touched. Remote URLs
+(``http://``, ``https://``, protocol relative URLs, ...) and already embedded
+``data:`` URIs are skipped. A file referenced several times is read only
+once, and with ``deduplicate=True`` (the default) content-identical files share
+one data URI.
+
+Problems raise an :class:`svgwrite.embed.EmbedError` subclass:
+
+* ``DocumentRootError`` - relative reference without a root (also a
+  ``ValueError``)
+* ``AssetNotFoundError`` - missing file (also a ``FileNotFoundError``)
+* ``PathTraversalError`` - resolved path outside the document root
+* ``AssetTypeError`` / ``UnsupportedAssetError`` - extension and content do
+  not agree or the type is not PNG/JPEG
+* ``AssetTooLargeError`` - file larger than ``max_size`` (10 MiB by default)
+* ``CircularReferenceError`` - a symbolic link loop, a cycle in the element
+  tree, or an image which refers to the SVG document itself
+
+Use ``strict=False`` to collect the problems in the returned
+:class:`svgwrite.embed.EmbedReport` and leave the affected references
+unchanged instead. Embedding is opt-in: ``write``, ``save`` and ``tostring``
+keep their usual behaviour when ``embed_images`` is not called.
+
 Parent Classes
 --------------
 

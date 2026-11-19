@@ -28,6 +28,9 @@ import base64
 from pathlib import Path
 from svgwrite.data import pattern
 
+#: default upper limit for a single embedded image file (10 MiB)
+DEFAULT_MAX_ASSET_SIZE = 10 * 1024 * 1024
+
 
 def is_string(value):
     return isinstance(value, str)

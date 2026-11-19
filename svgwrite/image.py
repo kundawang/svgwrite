@@ -8,6 +8,8 @@
 
 from svgwrite.base import BaseElement
 from svgwrite.mixins import Transform, _vert, _horiz, Clipping
+from svgwrite.utils import DEFAULT_MAX_ASSET_SIZE
+
 
 class Image(BaseElement, Transform, Clipping):
     """ The **image** element indicates that the contents of a complete file are
@@ -59,3 +61,17 @@ class Image(BaseElement, Transform, Clipping):
         if self.debug and scale not in ('meet', 'slice'):
             raise ValueError("Invalid scale parameter '%s'" % scale)
         self.attribs['preserveAspectRatio'] = "%s%s %s" % (_horiz[horiz],_vert[vert], scale)
+
+    def embed(self, root=None, max_size=DEFAULT_MAX_ASSET_SIZE):
+        """ Embed the local image file as a ``data:`` URI in place.
+
+        Remote URLs and already embedded data URIs are left unchanged.
+        See :meth:`svgwrite.Drawing.embed_images` for details.
+
+        :param root: explicit document root directory for relative references
+        :param int max_size: maximum file size in bytes, defaults to 10 MiB,
+          pass ``None`` to disable the limit
+        :returns: the new or unchanged ``xlink:href`` value
+        """
+        from svgwrite.embed import embed_image
+        return embed_image(self, root=root, max_size=max_size)

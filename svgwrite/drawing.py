@@ -27,7 +27,7 @@ import io
 
 from svgwrite.container import SVG, Defs
 from svgwrite.elementfactory import ElementFactory
-from svgwrite.utils import pretty_xml
+from svgwrite.utils import pretty_xml, DEFAULT_MAX_ASSET_SIZE
 
 
 class Drawing(SVG, ElementFactory):
@@ -82,6 +82,38 @@ class Drawing(SVG, ElementFactory):
 
         """
         self._stylesheets.append((href, title, alternate, media))
+
+    def embed_images(self, root=None, max_size=DEFAULT_MAX_ASSET_SIZE,
+                     deduplicate=True, strict=True, cache=None):
+        """ Embed local PNG/JPEG image files as ``data:`` URIs.
+
+        Walks all ``image`` elements (also inside ``defs``, groups, patterns
+        and masks) and replaces their ``xlink:href`` attribute with a base64
+        encoded data URI, so the drawing can be opened without the original
+        files. Remote URLs and already embedded data URIs are left unchanged;
+        all other attributes (size, transform, opacity, ...) are preserved.
+
+        Relative references are resolved against **root** and are not allowed
+        to escape it. Identical files are read only once.
+
+        :param root: explicit document root directory for relative references
+        :param int max_size: maximum file size in bytes, defaults to 10 MiB,
+          pass ``None`` to disable the limit
+        :param bool deduplicate: read every file at most once and share data
+          URIs between files with identical content
+        :param bool strict: raise an
+          :class:`~svgwrite.embed.EmbedError` subclass on the first problem;
+          with ``strict=False`` the problems are collected in the returned
+          report and the affected href is left unchanged
+        :param cache: optional :class:`~svgwrite.embed.AssetCache` shared
+          between calls
+        :returns: :class:`~svgwrite.embed.EmbedReport`
+        """
+        from svgwrite.embed import embed_images
+        document_path = self.filename if isinstance(self.filename, str) else None
+        return embed_images(
+            self, root=root, max_size=max_size, deduplicate=deduplicate,
+            strict=strict, cache=cache, document_path=document_path)
 
     def write(self, fileobj, pretty=False, indent=2):
         """ Write XML string to `fileobj`.
