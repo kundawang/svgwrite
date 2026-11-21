@@ -27,11 +27,19 @@ class Parameter(object):
        *read/write* property
 
        name of the SVG profile, valid profiles are: ``'full|basic|tiny'``
+
+    .. attribute:: Parameter.uri_policy
+
+       *read/write* attribute
+
+       optional :class:`svgwrite.uri_policy.ResourceURIPolicy` object,
+       `None` (the default) disables all resource URI checks
     """
-    __slots__ = ['_debug', 'validator', '_profile']
+    __slots__ = ['_debug', 'validator', '_profile', 'uri_policy']
 
     def __init__(self, debug=True, profile='full'):
         self._debug = debug
+        self.uri_policy = None
         self.profile = profile
 
     def _init_validator(self):

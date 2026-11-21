@@ -65,6 +65,11 @@ class BaseElement(object):
         if profile is not None:
             self._parameter.profile = profile
 
+        # optional resource URI policy
+        uri_policy = extra.pop('uri_policy', None)
+        if uri_policy is not None:
+            self._parameter.uri_policy = uri_policy
+
         self.attribs = dict()
         self.update(extra)
         self.elements = list()
@@ -114,6 +119,18 @@ class BaseElement(object):
 
     def set_parameter(self, parameter):
         self._parameter = parameter
+
+    def set_uri_policy(self, policy):
+        """ Set the resource URI policy, a
+        :class:`svgwrite.uri_policy.ResourceURIPolicy` object or `None`
+        to disable resource URI checks (the default).
+
+        The policy is stored in the shared :class:`Parameter` object, so
+        all elements created by the same factory (e.g. by a `Drawing`)
+        are checked by the same policy.
+
+        """
+        self._parameter.uri_policy = policy
 
     def next_id(self, value=None):
         return AutoID.next_id(value)
@@ -204,6 +221,9 @@ class BaseElement(object):
         :return: XML `ElementTree` of this object and all its subelements
 
         """
+        policy = self._parameter.uri_policy
+        if policy is not None:
+            policy.check_element(self)
         xml = etree.Element(self.elementname)
         if self.debug:
             self.validator.check_all_svg_attribute_values(self.elementname, self.attribs)

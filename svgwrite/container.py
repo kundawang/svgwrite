@@ -133,6 +133,15 @@ class SVG(Symbol):
         self.defs = Defs(factory=self)  # defs container
         self.add(self.defs)  # add defs as first element
 
+    def get_xml(self):
+        # check the whole element tree, so nested elements and elements
+        # created without this factory (own parameter object) are covered
+        # by the document wide resource URI policy as well
+        policy = self._parameter.uri_policy
+        if policy is not None:
+            policy.check_tree(self)
+        return super(SVG, self).get_xml()
+
     def embed_stylesheet(self, content):
         """ Add <style> tag to the defs section.
 

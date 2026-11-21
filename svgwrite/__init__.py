@@ -52,6 +52,7 @@ CYEAR = '2014-2019'
 
 from svgwrite.drawing import Drawing
 from svgwrite.utils import rgb
+from svgwrite.uri_policy import ResourceURIPolicy, ResourceURIError
 
 
 class Unit(object):

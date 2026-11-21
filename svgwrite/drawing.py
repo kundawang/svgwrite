@@ -101,6 +101,10 @@ class Drawing(SVG, ElementFactory):
         # don't use DOCTYPE. It's useless. see also:
         # http://tech.groups.yahoo.com/group/svg-developers/message/48562
         # write stylesheets
+        policy = self._parameter.uri_policy
+        if policy is not None:  # check stylesheet references
+            for stylesheet in self._stylesheets:
+                policy.check(stylesheet[0], element='xml-stylesheet')
         stylesheet_template = '<?xml-stylesheet href="%s" type="text/css" ' \
             'title="%s" alternate="%s" media="%s"?>\n'
         # removed map(), does not work with Python 3
