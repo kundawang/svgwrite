@@ -8,6 +8,10 @@
 
 from svgwrite.base import BaseElement
 from svgwrite.mixins import XLink, ViewBox, Transform, Presentation
+from svgwrite.patternlayout import (
+    PatternLayoutError, PatternLimitError, PatternTile,
+    compute_pattern_tiles,
+)
 from svgwrite.utils import is_string
 
 class Pattern(BaseElement, XLink, ViewBox, Transform, Presentation):
@@ -40,7 +44,10 @@ class Pattern(BaseElement, XLink, ViewBox, Transform, Presentation):
             if is_string(inherit):
                 self.set_href(inherit)
             else:
+                # keep the object reference for the inheritance chain used by
+                # visible_tiles() while serializing the IRI as before
                 self.set_href(inherit.get_iri())
+                self.href = inherit
 
         if self.debug:
             self.validator.check_all_svg_attribute_values(self.elementname, self.attribs)
@@ -48,3 +55,29 @@ class Pattern(BaseElement, XLink, ViewBox, Transform, Presentation):
     def get_paint_server(self, default='none'):
         """ Returns the <FuncIRI> of the gradient. """
         return "%s %s" % (self.get_funciri(), default)
+
+    def visible_tiles(self, bbox, viewport=None, **kwargs):
+        """ Compute the pattern tiles visible on a canvas.
+
+        :param bbox: target object bounding box ``(x, y, width, height)`` in
+            user space; also defines the ``objectBoundingBox`` reference
+        :param viewport: canvas viewport ``(x, y, width, height)``; defaults
+            to *bbox*. Only tiles intersecting both rectangles are returned.
+        :param int max_tiles: candidate tile cap (default 100000), see
+            :class:`svgwrite.patternlayout.PatternLimitError`
+        :param dict registry: mapping ``'#id' -> Pattern`` for resolving
+            string ``xlink:href`` inheritance references
+        :returns: row-major ordered ``list`` of
+            :class:`svgwrite.patternlayout.PatternTile`; each tile carries
+            its integer index ``(i, j)`` and the full content-to-user-space
+            transform matrix.
+
+        Supports ``patternUnits`` (``userSpaceOnUse`` /
+        ``objectBoundingBox``), ``patternTransform``, ``viewBox`` with
+        ``preserveAspectRatio``, negative coordinates, non integer sizes and
+        the ``xlink:href`` inheritance chain. Raises
+        :class:`svgwrite.patternlayout.PatternLayoutError` for zero size
+        tiles, singular transforms or broken inheritance and
+        :class:`PatternLimitError` when *max_tiles* is exceeded.
+        """
+        return compute_pattern_tiles(self, bbox, viewport, **kwargs)
