@@ -24,10 +24,59 @@ section by::
 
 """
 import io
+import re
 
 from svgwrite.container import SVG, Defs
 from svgwrite.elementfactory import ElementFactory
 from svgwrite.utils import pretty_xml
+
+# XML 1.0 valid chars: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] |
+# [#x10000-#x10FFFF]
+_INVALID_XML_CHARS = re.compile(
+    u'['
+    u'\x00-\x08\x0b\x0c\x0e-\x1f'
+    u'\ud800-\udfff'
+    u'\ufffe\uffff'
+    u']'
+)
+
+_STYLESHEET_ESCAPE_MAP = {
+    u'&': u'&amp;',   # must be first, see _escape_stylesheet_value()
+    u'<': u'&lt;',
+    u'>': u'&gt;',
+    u'"': u'&quot;',
+    u'\t': u'&#9;',
+    u'\n': u'&#10;',
+    u'\r': u'&#13;',
+}
+
+
+def _escape_stylesheet_value(value, name):
+    """ Escape a value for an xml-stylesheet pseudo-attribute.
+
+    The W3C spec "Associating Style Sheets with XML documents" parses
+    pseudo-attributes like real attributes, so entity and character
+    references are resolved by the stylesheet processor.
+
+    :param string value: raw attribute value
+    :param string name: parameter name, used in error messages
+    :return: escaped value, safe to embed in double quotes
+    :raises TypeError: if `value` is not a string
+    :raises ValueError: if `value` contains ``'?>'`` or characters which are
+        not valid in XML 1.0 documents
+
+    """
+    if not isinstance(value, str):
+        raise TypeError("stylesheet %s has to be a string, got %s" %
+                        (name, type(value).__name__))
+    if u'?>' in value:
+        raise ValueError("stylesheet %s must not contain '?>'" % name)
+    match = _INVALID_XML_CHARS.search(value)
+    if match is not None:
+        raise ValueError(
+            "stylesheet %s contains a character which is not valid in "
+            "XML 1.0 documents: %r" % (name, match.group()))
+    return u''.join(_STYLESHEET_ESCAPE_MAP.get(char, char) for char in value)
 
 
 class Drawing(SVG, ElementFactory):
@@ -80,6 +129,12 @@ class Drawing(SVG, ElementFactory):
         :param string alternate: ``'yes'|'no'``
         :param string media: ``'all | aureal | braille | embossed | handheld | print | projection | screen | tty | tv'``
 
+        All values are escaped when the xml-stylesheet processing
+        instruction is written: ``&``, ``<``, ``>`` and ``"`` become entity
+        references, tab and newline become character references. Values
+        containing ``'?>'`` or characters which are invalid in XML 1.0
+        documents are rejected with a `ValueError` at write time.
+
         """
         self._stylesheets.append((href, title, alternate, media))
 
@@ -94,17 +149,26 @@ class Drawing(SVG, ElementFactory):
 
             open('filename', 'w', encoding='utf-8')
         """
-        # write xml header
-        fileobj.write('<?xml version="1.0" encoding="utf-8" ?>\n')
-
         # don't use DOCTYPE. It's useless. see also:
         # http://tech.groups.yahoo.com/group/svg-developers/message/48562
-        # write stylesheets
+        # write stylesheets - escape and validate all values first, so an
+        # invalid stylesheet raises before anything is written and can not
+        # leave a truncated, seemingly successful file behind
         stylesheet_template = '<?xml-stylesheet href="%s" type="text/css" ' \
             'title="%s" alternate="%s" media="%s"?>\n'
-        # removed map(), does not work with Python 3
-        for stylesheet in self._stylesheets:
-            fileobj.write(stylesheet_template % stylesheet)
+        names = ('href', 'title', 'alternate', 'media')
+        stylesheet_declarations = [
+            stylesheet_template % tuple(
+                _escape_stylesheet_value(value, name)
+                for value, name in zip(stylesheet, names)
+            )
+            for stylesheet in self._stylesheets
+        ]
+
+        # write xml header
+        fileobj.write('<?xml version="1.0" encoding="utf-8" ?>\n')
+        for declaration in stylesheet_declarations:
+            fileobj.write(declaration)
 
         xml_string = self.tostring()
         if pretty:  # write easy readable XML file
