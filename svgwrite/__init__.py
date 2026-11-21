@@ -52,6 +52,7 @@ CYEAR = '2014-2019'
 
 from svgwrite.drawing import Drawing
 from svgwrite.utils import rgb
+from svgwrite.migrate import migrate_to_tiny
 
 
 class Unit(object):

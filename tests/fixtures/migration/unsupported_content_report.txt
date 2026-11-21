@@ -1,0 +1,8 @@
+/svg/defs/marker#arrow: element <marker> element is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/defs/filter#blur: element <filter> element is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/defs/clipPath#clip1: element <clipPath> element is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/defs/linearGradient#grad1: attribute 'spreadMethod' of <linearGradient> attribute is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/defs/linearGradient#grad1: attribute 'gradientTransform' of <linearGradient> attribute is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/line#l1: attribute 'marker-end' of <line> attribute is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/line#l1: attribute 'marker-start' of <line> attribute is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/text#t1/tref: element <tref> element is not part of the SVG Tiny 1.2 profile [degraded]

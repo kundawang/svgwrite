@@ -1,0 +1,2 @@
+/svg/defs/symbol#sym1: element <symbol> element is not part of the SVG Tiny 1.2 profile [degraded]
+/svg/use#u1: attribute 'xlink:href' of <use> dangling reference '#sym1': the referenced element was removed by the migration [degraded]
