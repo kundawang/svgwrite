@@ -2,6 +2,16 @@
 NEWS
 ====
 
+Unreleased
+----------
+
+* NEW: SMIL animation quality assurance in :mod:`svgwrite.animationcheck`.
+  ``check_animations(drawing)`` reports missing begin/end event references,
+  circular timing dependencies (mutually waiting animations that can never
+  start) and unreachable startup chains, plus values/keyTimes/keySplines/
+  dur/repeatCount combination boundary violations. Serialization output is
+  unchanged.
+
 Version 1.4 - 2020-03-28
 ------------------------
 
