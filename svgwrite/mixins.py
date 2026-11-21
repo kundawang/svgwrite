@@ -272,6 +272,9 @@ class Markers(object):
                 return 'url(%s)' % value
             else:
                 # else create a reference to the object '#id'
+                get_ref = getattr(value, 'get_funciri', None)
+                if get_ref is not None:
+                    return get_ref()
                 return 'url(#%s)' % value['id']
 
         if is_string(markers):

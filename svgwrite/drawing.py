@@ -27,6 +27,7 @@ import io
 
 from svgwrite.container import SVG, Defs
 from svgwrite.elementfactory import ElementFactory
+from svgwrite.idscope import IDScope
 from svgwrite.utils import pretty_xml
 
 
@@ -39,11 +40,24 @@ class Drawing(SVG, ElementFactory):
     A drawing can range from an empty drawing (i.e., no content inside of the drawing),
     to a very simple drawing containing a single SVG element such as a *rect*,
     to a complex, deeply nested collection of container elements and graphics elements.
+
+    Each drawing owns an independent :class:`~svgwrite.idscope.IDScope`, which
+    manages the automatically generated ``id`` attributes of that drawing.
+    Two drawings created at the same time - also by different threads - do not
+    share an ID counter, therefore both documents can be reproduced with the
+    same output. Setting ``id_scope=False`` restores the old behavior with one
+    process wide :class:`~svgwrite.utils.AutoID` counter.
     """
-    def __init__(self, filename="noname.svg", size=('100%', '100%'), **extra):
+    def __init__(self, filename="noname.svg", size=('100%', '100%'),
+                 id_scope=True, **extra):
         """
         :param string filename: filesystem filename valid for :func:`open`
         :param 2-tuple size: width, height
+        :param id_scope: ``True`` (default) creates an independent
+            :class:`~svgwrite.idscope.IDScope` for this drawing, ``False``
+            keeps the legacy process wide auto ID counter. An existing
+            :class:`~svgwrite.idscope.IDScope` can be passed to share a
+            namespace explicitly.
         :param keywords extra: additional svg-attributes for the *SVG* object
 
         Important (and not SVG Attributes) **extra** parameters:
@@ -52,9 +66,18 @@ class Drawing(SVG, ElementFactory):
         :param bool debug: switch validation on/off
 
         """
+        self._id_scope = self._make_id_scope(id_scope)
         super(Drawing, self).__init__(size=size, **extra)
         self.filename = filename
         self._stylesheets = []  # list of stylesheets appended
+
+    @staticmethod
+    def _make_id_scope(id_scope):
+        if isinstance(id_scope, IDScope):
+            return id_scope
+        if id_scope is None or id_scope is False:
+            return None
+        return IDScope()
 
     def get_xml(self):
         """ Get the XML representation as `ElementTree` object.

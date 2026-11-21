@@ -26,6 +26,7 @@ or (german) http://www.selfsvg.info .
 
    svgwrite
    utils/utils
+   utils/idscope
 
 
 .. toctree::

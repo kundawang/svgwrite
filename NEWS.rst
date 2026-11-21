@@ -2,6 +2,25 @@
 NEWS
 ====
 
+Version 1.5 - unreleased
+------------------------
+
+* NEW: every :class:`~svgwrite.drawing.Drawing` owns an independent
+  :class:`~svgwrite.idscope.IDScope`; auto generated IDs no longer come from a
+  shared process wide counter, so concurrently built documents are
+  reproducible. Pass ``id_scope=False`` to ``Drawing()`` to keep the legacy
+  behavior.
+* NEW: auto generated IDs avoid IDs which already exist in the document.
+* NEW: ID conflicts are resolved deterministically (``id`` -> ``id_1``) and
+  recorded at ``Drawing.id_scope.conflicts``; use
+  ``IDScope(conflict_policy='raise')`` to raise instead.
+* NEW: ``BaseElement.remove()`` detaches an element from its document and
+  releases its IDs; elements moved between documents keep consistent
+  references, including ``defs``/``use``, ``textPath``, gradient/pattern
+  inheritance and animation timing references.
+* CHANGED: ``BaseElement.copy()`` is now a recursive copy which assigns new
+  IDs to all copied elements and rewrites references inside the copy.
+
 Version 1.4 - 2020-03-28
 ------------------------
 

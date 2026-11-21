@@ -18,6 +18,14 @@ Attributes
 
    SVG defs section - as :class:`~svgwrite.container.Defs` object.
 
+.. attribute:: Drawing.id_scope
+
+   The :class:`~svgwrite.idscope.IDScope` of this drawing. Automatically
+   generated IDs are allocated from this scope, so a drawing never shares its
+   ID counter with another drawing. Pass ``id_scope=False`` to
+   :meth:`__init__` to keep the legacy process wide
+   :class:`~svgwrite.utils.AutoID` counter instead.
+
 Methods
 -------
 

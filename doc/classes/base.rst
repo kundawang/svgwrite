@@ -21,6 +21,10 @@ Methods
 
 .. automethod:: svgwrite.base.BaseElement.add
 
+.. automethod:: svgwrite.base.BaseElement.remove
+
+.. automethod:: svgwrite.base.BaseElement.copy
+
 .. automethod:: svgwrite.base.BaseElement.tostring
 
 .. automethod:: svgwrite.base.BaseElement.get_xml
@@ -40,6 +44,12 @@ Methods
 .. automethod:: svgwrite.base.BaseElement.set_desc
 
 .. automethod:: svgwrite.base.BaseElement.set_metadata
+
+.. attribute:: BaseElement.id_scope
+
+   The :class:`~svgwrite.idscope.IDScope` this element belongs to, or `None`
+   for detached elements. Elements created by a :class:`~svgwrite.drawing.Drawing`
+   inherit the scope of that drawing.
 
 set/get SVG attributes::
 

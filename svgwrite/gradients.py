@@ -40,7 +40,8 @@ class _AbstractGradient(BaseElement, Transform, XLink):
             if is_string(inherit):
                 self.set_href(inherit)
             else:
-                self.set_href(inherit.get_iri())
+                self.href = inherit
+                self.update_id()
 
     def get_paint_server(self, default='none'):
         """ Returns the <FuncIRI> of the gradient. """

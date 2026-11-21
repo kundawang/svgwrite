@@ -40,7 +40,8 @@ class Pattern(BaseElement, XLink, ViewBox, Transform, Presentation):
             if is_string(inherit):
                 self.set_href(inherit)
             else:
-                self.set_href(inherit.get_iri())
+                self.href = inherit
+                self.update_id()
 
         if self.debug:
             self.validator.check_all_svg_attribute_values(self.elementname, self.attribs)
