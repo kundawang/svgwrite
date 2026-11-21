@@ -28,6 +28,7 @@ import io
 from svgwrite.container import SVG, Defs
 from svgwrite.elementfactory import ElementFactory
 from svgwrite.utils import pretty_xml
+from svgwrite import units
 
 
 class Drawing(SVG, ElementFactory):
@@ -55,6 +56,84 @@ class Drawing(SVG, ElementFactory):
         super(Drawing, self).__init__(size=size, **extra)
         self.filename = filename
         self._stylesheets = []  # list of stylesheets appended
+
+    def set_canvas_unit(self, unit, dpi=units.DEFAULT_DPI, mode='viewport'):
+        """ Convert the canvas to another absolute **unit** while keeping the
+        physical (printed) size of the drawing constant.
+
+        Supported units: ``px``, ``mm``, ``cm``, ``in``, ``pt``, ``pc``.
+        The **dpi** parameter defines how many pixels (SVG user units)
+        represent one inch, default is the CSS reference value of 96.
+
+        Two explicit modes:
+
+        * ``mode='viewport'`` - only the **width**/**height** attributes are
+          rewritten in the new unit, the viewBox and all content geometry
+          stay untouched. The physical canvas size is preserved.
+        * ``mode='scale'`` - the user coordinate system is rescaled so that
+          1 user unit equals 1 **unit** afterwards: a new size and a
+          corresponding viewBox are generated and all coordinates in the
+          content (nested groups, path data, points, transforms and
+          **stroke-width** included) are scaled accordingly. The physical
+          size of the canvas and of every drawn object is preserved.
+
+        Rules for edge cases (see also :mod:`svgwrite.units`):
+
+        * relative canvas sizes (``%``, ``em``, ``ex``) are rejected,
+          the physical canvas size can not be determined
+        * zero sized canvases or zero sized viewBoxes are rejected in
+          ``'scale'`` mode (the user unit size is undefined), in
+          ``'viewport'`` mode zero stays zero
+        * invalid DPI values (not finite, ``<= 0`` or ``> MAX_DPI``) and
+          non finite or overflowing lengths are rejected
+        * relative units and unparseable values inside the content are
+          preserved unchanged
+
+        :param string unit: target canvas unit
+        :param float dpi: dots per inch used for the px relation
+        :param string mode: ``'viewport'`` or ``'scale'``
+        :raises ValueError: for invalid units, DPI, sizes or modes
+
+        """
+        if mode not in ('viewport', 'scale'):
+            raise ValueError("Invalid mode: %r (use 'viewport' or 'scale')" % (mode,))
+        # validates unit and dpi, rejects relative units
+        ppu_new = units.px_per_unit(unit, dpi)
+        width_px = units.to_px(self.attribs.get('width', '100%'), dpi)
+        height_px = units.to_px(self.attribs.get('height', '100%'), dpi)
+
+        if mode == 'viewport':
+            self['width'] = units.format_length(width_px / ppu_new, unit)
+            self['height'] = units.format_length(height_px / ppu_new, unit)
+            return
+
+        # mode == 'scale': rescale the user coordinate system
+        if width_px == 0 or height_px == 0:
+            raise ValueError("Can not scale a zero sized canvas: (%r, %r)"
+                             % (self.attribs.get('width'), self.attribs.get('height')))
+        viewbox = self.attribs.get('viewBox')
+        if viewbox is not None:
+            minx, miny, vb_width, vb_height = units.parse_viewbox(viewbox)
+            if vb_width == 0 or vb_height == 0:
+                raise ValueError("Can not scale a zero sized viewBox: %r" % (viewbox,))
+            user_unit_px = width_px / vb_width  # physical size of 1 user unit
+        else:
+            minx = miny = 0.0
+            vb_width, vb_height = width_px, height_px
+            user_unit_px = 1.0  # unitless user unit is 1 px by definition
+
+        factor = user_unit_px / ppu_new
+        for element in self.elements:
+            units.scale_element(element, factor, ppu_new, dpi)
+
+        # new viewBox: user space expressed in the new unit, so that
+        # 1 user unit == 1 unit (non zero origins are scaled as well)
+        self['viewBox'] = ','.join(units.format_number(value) for value in
+                                   (minx * factor, miny * factor,
+                                    vb_width * factor, vb_height * factor))
+        self['width'] = units.format_length(width_px / ppu_new, unit)
+        self['height'] = units.format_length(height_px / ppu_new, unit)
+
 
     def get_xml(self):
         """ Get the XML representation as `ElementTree` object.
