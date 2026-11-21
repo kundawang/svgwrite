@@ -37,6 +37,10 @@ Methods
 
 .. automethod:: svgwrite.filters.Filter.__init__
 
+.. automethod:: svgwrite.filters.Filter.auto_region
+
+.. automethod:: svgwrite.filterregion.calc_filter_region
+
 .. method:: Filter.feBlend(in_, start=None, size=None, \*\*extra)
 
    create and add a :ref:`feBlend`
@@ -161,6 +165,31 @@ Standard SVG Attributes
 * :doc:`Core Attributes </attributes/core>`
 * :doc:`Presentation Attributes </attributes/presentation>`
 * :doc:`XLink Attributes </attributes/xlink>`
+
+Computing the filter effects region
+-----------------------------------
+
+The SVG default filter region (``x="-10%" y="-10%" width="120%"
+height="120%"`` of the object bounding box) clips the blurred part of a
+drop shadow whenever the blur or the offset reaches farther than 10%.
+:meth:`Filter.auto_region` computes a region that covers every primitive
+result -- blur expansion (``2 * stdDeviation`` per side), offsets including
+negative ones, morphology radii and the union of multi-input primitives --
+from the object bounding box and the primitives already added to the filter::
+
+  myfilter = dwg.defs.add(dwg.filter())
+  myfilter.feGaussianBlur(in_='SourceAlpha', stdDeviation=4, result='blur')
+  myfilter.feOffset(in_='blur', dx=10, dy=6, result='shadow')
+  myfilter.feComposite(in_='SourceGraphic', in2='shadow', operator='over')
+  # bbox of the filtered object as (minx, miny, width, height)
+  myfilter.auto_region((0, 0, 100, 50))
+
+Explicitly set x/y/width/height attributes are kept unless
+``override=True``. Unknown or unbounded primitives (``feTile``,
+``feTurbulence``, lighting filters, ...), zero area objects and very large
+radii get a conservative fallback region, so the generated attributes are
+always valid SVG. The underlying function is
+:func:`svgwrite.filterregion.calc_filter_region`.
 
 Example
 -------

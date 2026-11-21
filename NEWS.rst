@@ -2,6 +2,17 @@
 NEWS
 ====
 
+Version 1.4.1 - UNRELEASED
+--------------------------
+
+* NEW: automatic filter effects region calculation --
+  :meth:`svgwrite.filters.Filter.auto_region` and the
+  :mod:`svgwrite.filterregion` module compute filter ``x``/``y``/
+  ``width``/``height`` from the object bounding box and the contained
+  filter primitives (blur expansion, offsets, morphology and multi-input
+  unions), with conservative fallbacks for unbounded primitives, zero area
+  objects and very large radii
+
 Version 1.4 - 2020-03-28
 ------------------------
 

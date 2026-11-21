@@ -9,8 +9,9 @@
 from svgwrite.base import BaseElement
 from svgwrite.mixins import XLink, Presentation
 from svgwrite.utils import strlist, is_string
+from svgwrite.filterregion import calc_filter_region, FilterRegion
 
-__all__ = ['Filter']
+__all__ = ['Filter', 'calc_filter_region', 'FilterRegion']
 
 
 class _feDistantLight(BaseElement):
@@ -263,6 +264,41 @@ class Filter(BaseElement, XLink, Presentation):
     def get_xml(self):
         self.update_id()
         return super(Filter, self).get_xml()
+
+    def auto_region(self, bbox, filter_units=None, primitive_units=None,
+                    override=False):
+        """Compute and set the filter effects region from the object
+        bounding box and the contained filter primitives.
+
+        :param bbox: object bounding box as a 4-tuple
+            ``(minx, miny, width, height)`` in user units, or ``None`` if
+            the object geometry is unknown
+        :param filter_units: ``'objectBoundingBox'`` (default) or
+            ``'userSpaceOnUse'``; overrides the ``filterUnits`` attribute
+            when given
+        :param primitive_units: ``'userSpaceOnUse'`` (default) or
+            ``'objectBoundingBox'``; overrides the ``primitiveUnits``
+            attribute when given
+        :param bool override: replace existing x/y/width/height attributes;
+            the default keeps explicitly set attributes and only fills in
+            the missing ones
+        :returns: the computed :class:`~svgwrite.filterregion.FilterRegion`
+            ``(x, y, width, height)``
+
+        Unknown/unbounded primitives, zero area objects and very large radii
+        get the conservative fallback region described in
+        :mod:`svgwrite.filterregion`, so the resulting attributes are always
+        valid SVG.
+        """
+        region = calc_filter_region(
+            self, bbox, filter_units=filter_units,
+            primitive_units=primitive_units)
+        attributes = (('x', region.x), ('y', region.y),
+                      ('width', region.width), ('height', region.height))
+        for name, value in attributes:
+            if override or name not in self.attribs:
+                self[name] = value
+        return region
 
     def __getattr__(self, name):
         # create primitive filters by Filter.<filtername>(...)
