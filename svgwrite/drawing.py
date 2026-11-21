@@ -27,6 +27,7 @@ import io
 
 from svgwrite.container import SVG, Defs
 from svgwrite.elementfactory import ElementFactory
+from svgwrite.streaming import stream_write
 from svgwrite.utils import pretty_xml
 
 
@@ -83,17 +84,25 @@ class Drawing(SVG, ElementFactory):
         """
         self._stylesheets.append((href, title, alternate, media))
 
-    def write(self, fileobj, pretty=False, indent=2):
+    def write(self, fileobj, pretty=False, indent=2, incremental=False):
         """ Write XML string to `fileobj`.
 
         :param fileobj: a file-like object
         :param pretty: True for easy readable output
         :param indent: how much to indent if pretty is enabled, by default 2 spaces
+        :param incremental: True to write the document element by element
+            directly into `fileobj` (see :func:`svgwrite.streaming.stream_write`)
+            instead of building the whole XML string in memory first; this
+            bounds the peak memory usage of very large documents by the
+            biggest single element and leaves the drawing unmodified
 
         Python 3.x - set encoding at the open command::
 
             open('filename', 'w', encoding='utf-8')
         """
+        if incremental:
+            stream_write(self, fileobj, pretty=pretty, indent=indent)
+            return
         # write xml header
         fileobj.write('<?xml version="1.0" encoding="utf-8" ?>\n')
 
@@ -111,25 +120,29 @@ class Drawing(SVG, ElementFactory):
             xml_string = pretty_xml(xml_string, indent=indent)
         fileobj.write(xml_string)
 
-    def save(self, pretty=False, indent=2):
+    def save(self, pretty=False, indent=2, incremental=False):
         """ Write the XML string to `self.filename`.
 
         :param pretty: True for easy readable output
         :param indent: how much to indent if pretty is enabled, by default 2 spaces
+        :param incremental: True to stream the document element by element
+            (see :meth:`write`)
         """
         fileobj = io.open(self.filename, mode='w', encoding='utf-8')
-        self.write(fileobj, pretty=pretty, indent=indent)
+        self.write(fileobj, pretty=pretty, indent=indent, incremental=incremental)
         fileobj.close()
 
-    def saveas(self, filename, pretty=False, indent=2):
+    def saveas(self, filename, pretty=False, indent=2, incremental=False):
         """ Write the XML string to `filename`.
 
         :param string filename: filesystem filename valid for :func:`open`
         :param pretty: True for easy readable output
         :param indent: how much to indent if pretty is enabled, by default 2 spaces
+        :param incremental: True to stream the document element by element
+            (see :meth:`write`)
         """
         self.filename = filename
-        self.save(pretty=pretty, indent=indent)
+        self.save(pretty=pretty, indent=indent, incremental=incremental)
 
     def _repr_svg_(self):
         """ Show SVG in IPython, Jupyter Notebook, and Jupyter Lab
