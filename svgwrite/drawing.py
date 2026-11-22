@@ -29,6 +29,7 @@ import io
 from svgwrite.container import SVG, Defs
 from svgwrite.elementfactory import ElementFactory
 from svgwrite.utils import pretty_xml
+from svgwrite.transaction import Transaction
 
 
 class Drawing(SVG, ElementFactory):
@@ -56,6 +57,25 @@ class Drawing(SVG, ElementFactory):
         super(Drawing, self).__init__(size=size, **extra)
         self.filename = filename
         self._stylesheets = []  # list of stylesheets appended
+
+    # mutable state outside element.attribs, snapshotted by transactions
+    _transaction_state = ('_stylesheets',)
+
+    def transaction(self):
+        """Open a document editing transaction.
+
+        Returns a :class:`~svgwrite.transaction.Transaction` context manager;
+        all edits made inside the ``with`` block become visible together on
+        successful exit, and are rolled back when an exception escapes::
+
+            with dwg.transaction():
+                dwg.defs.add(dwg.symbol(id='icon'))
+                dwg.add(dwg.use('#icon', insert=(0, 0)))
+
+        One transaction per document at a time; nested and concurrent
+        transactions raise :class:`~svgwrite.transaction.TransactionError`.
+        """
+        return Transaction(self)
 
     def get_xml(self):
         """ Get the XML representation as `ElementTree` object.

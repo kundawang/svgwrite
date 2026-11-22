@@ -52,6 +52,7 @@ CYEAR = '2014-2019'
 
 from svgwrite.drawing import Drawing
 from svgwrite.utils import rgb
+from svgwrite.transaction import Transaction, TransactionError
 
 
 class Unit(object):

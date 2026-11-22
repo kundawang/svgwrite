@@ -25,6 +25,7 @@ or (german) http://www.selfsvg.info .
    :caption: Modules
 
    svgwrite
+   transaction
    utils/utils
 
 

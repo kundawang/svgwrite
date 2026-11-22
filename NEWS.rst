@@ -8,6 +8,10 @@ Version 1.4b0 - dev
 * Requires Python 3.6
 * Optimized/faster svgparser module by Florian Festi
 * Removed batch files to run tests on Windows, use pytest or tox instead
+* NEW: document editing transactions (`Drawing.transaction()`) to make
+  multi-step edits across defs, layers and references atomic; changes become
+  visible together on commit and are fully rolled back on exception or
+  explicit `rollback()`, including automatic IDs and shared references
 
 Version 1.3.1 - 2019-06-28
 --------------------------

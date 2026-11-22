@@ -243,6 +243,8 @@ class Script(BaseElement):
 
     """
     elementname = 'script'
+    # mutable state outside element.attribs, snapshotted by transactions
+    _transaction_state = ('_content',)
 
     def __init__(self, href=None, content="", **extra):
         """

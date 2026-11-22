@@ -31,6 +31,8 @@ Methods
 
 .. automethod:: svgwrite.drawing.Drawing.add_stylesheet
 
+.. automethod:: svgwrite.drawing.Drawing.transaction
+
 .. automethod:: svgwrite.drawing.Drawing.get_xml
 
 .. method:: Drawing.tostring()

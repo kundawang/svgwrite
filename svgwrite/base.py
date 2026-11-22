@@ -15,6 +15,7 @@ import copy
 
 from svgwrite.params import Parameter
 from svgwrite.utils import AutoID, to_unicode, PYTHON3
+from svgwrite.transaction import TrackingDict, TrackingList
 
 
 class BaseElement(object):
@@ -65,9 +66,11 @@ class BaseElement(object):
         if profile is not None:
             self._parameter.profile = profile
 
-        self.attribs = dict()
+        # transaction-aware containers; behave like plain dict/list when no
+        # transaction is open
+        self.attribs = TrackingDict(self)
         self.update(extra)
-        self.elements = list()
+        self.elements = TrackingList(self)
 
     def update(self, attribs):
         """ Update SVG Attributes from `dict` attribs.
@@ -86,8 +89,11 @@ class BaseElement(object):
 
     def copy(self):
         newobj = copy.copy(self)  # shallow copy of object
-        newobj.attribs = copy.copy(self.attribs)  # shallow copy of attributes
-        newobj.elements = copy.copy(self.elements)  # shallow copy of subelements
+        newobj.attribs = TrackingDict(newobj)
+        newobj.attribs.update(self.attribs)
+        # shallow copy of subelements
+        newobj.elements = TrackingList(newobj)
+        newobj.elements.extend(self.elements)
         if 'id' in newobj.attribs:  # create a new 'id'
             newobj['id'] = newobj.next_id()
         return newobj
@@ -161,22 +167,47 @@ class BaseElement(object):
 
         """
         # Attribute checking is only done by using the __setitem__() method or
-        # by self['attribute'] = value
+        # by self['attribute'] = value. The TrackingDict records the mutation
+        # when a transaction is open.
         if self.debug:
             self.validator.check_svg_attribute_value(self.elementname, key, value)
         self.attribs[key] = value
 
-    def add(self, element):
+    def __delitem__(self, key):
+        """ Delete SVG attribute *key*.
+
+        :param string key: SVG attribute name
+
+        Inside an open transaction the deletion is undone on rollback.
+        """
+        del self.attribs[key]
+
+    def add(self, element, index=None):
         """ Add an SVG element as subelement.
 
         :param element: append this SVG element
+        :param int index: insert position; ``None`` (the default) appends the
+          element at the end
         :returns: the added element
 
         """
         if self.debug:
             self.validator.check_valid_children(self.elementname, element.elementname)
-        self.elements.append(element)
+        if index is None:
+            self.elements.append(element)
+        else:
+            self.elements.insert(index, element)
         return element
+
+    def remove(self, element):
+        """ Remove subelement *element*.
+
+        :param element: the SVG element to remove
+        :raises ValueError: if *element* is not a subelement
+
+        Inside an open transaction the removal is undone on rollback.
+        """
+        self.elements.remove(element)
 
     def tostring(self):
         """ Get the XML representation as unicode `string`.

@@ -107,6 +107,8 @@ class Polyline(BaseElement, Transform, Presentation, Markers):
     segments. Typically, **polyline** elements define open shapes.
     """
     elementname = 'polyline'
+    # mutable state outside element.attribs, snapshotted by transactions
+    _transaction_state = ('points',)
 
     def __init__(self, points=[], **extra):
         """

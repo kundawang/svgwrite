@@ -16,6 +16,8 @@ class Path(BaseElement, Transform, Presentation, Markers):
 
     """
     elementname = 'path'
+    # mutable state outside element.attribs, snapshotted by transactions
+    _transaction_state = ('commands',)
 
     def __init__(self, d=None, **extra):
         """
